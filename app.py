@@ -22,11 +22,16 @@ from data_loader import (
     MINE_LABELS, PHASE_LABELS, MINE_VAR_LABELS, PHASE_VAR_LABELS_UC_US, PHASE_VAR_LABELS_UL
 )
 
+from pathlib import Path
+from PIL import Image
+
+LOGO_PATH = Path(__file__).resolve().parent / "assets" / "logo_ocp.png"
+page_icon = Image.open(LOGO_PATH) if LOGO_PATH.exists() else "🟢"
+
 st.set_page_config(
     page_title="OCP Gantour Intelligence",
-    page_icon="⛏️",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    page_icon=page_icon,
+    layout="wide"
 )
 
 style.inject()
