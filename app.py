@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
+from style import style_plotly
 from scipy import stats
 import statsmodels.api as sm
 from statsmodels.stats.outliers_influence import variance_inflation_factor
@@ -112,6 +113,7 @@ with tab_overview:
                        color_discrete_sequence=["#009A44", "#3B82F6", "#F5A623"])
         fig.update_layout(height=380, legend_title_text="", xaxis_title="", yaxis_title="Cout total (DH)",
                            plot_bgcolor="white", paper_bgcolor="white", margin=dict(t=10, l=10, r=10, b=10))
+        fig = style_plotly(fig)
         st.plotly_chart(fig, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -122,6 +124,7 @@ with tab_overview:
         fig2 = px.pie(rep, values="cout_total_mines", names="mine_label", hole=0.55,
                        color_discrete_sequence=["#009A44", "#3B82F6", "#F5A623"])
         fig2.update_layout(height=380, margin=dict(t=10, l=10, r=10, b=10))
+        fig2 = style_plotly(fig2)
         st.plotly_chart(fig2, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -131,6 +134,7 @@ with tab_overview:
                     color_discrete_sequence=["#009A44", "#3B82F6", "#F5A623"])
     fig3.update_layout(height=340, legend_title_text="", xaxis_title="", yaxis_title="Production (t)",
                         plot_bgcolor="white", paper_bgcolor="white", margin=dict(t=10, l=10, r=10, b=10))
+    fig3 = style_plotly(fig3)
     st.plotly_chart(fig3, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -172,11 +176,13 @@ with tab_dist:
         fig_hist.add_vline(x=series.median(), line_dash="dot", line_color="#3B82F6", annotation_text="Mediane")
         fig_hist.update_layout(height=360, showlegend=False, xaxis_title=var_label, yaxis_title="Frequence",
                                 plot_bgcolor="white", paper_bgcolor="white", margin=dict(t=10, l=10, r=10, b=10))
+        fig_hist = style_plotly(fig_hist)
         st.plotly_chart(fig_hist, use_container_width=True)
     with col_box:
         fig_box = px.box(series, points="outliers", color_discrete_sequence=["#009A44"])
         fig_box.update_layout(height=360, showlegend=False, yaxis_title=var_label,
                                plot_bgcolor="white", paper_bgcolor="white", margin=dict(t=10, l=10, r=10, b=10))
+        fig_box = style_plotly(fig_box)
         st.plotly_chart(fig_box, use_container_width=True)
 
     q1, q3 = series.quantile(0.25), series.quantile(0.75)
@@ -229,6 +235,7 @@ with tab_mines:
                                          line=dict(color=colors[i % len(colors)]), mode="lines"))
         fig_ts.update_layout(height=380, plot_bgcolor="white", paper_bgcolor="white",
                               margin=dict(t=10, l=10, r=10, b=10), legend_title_text="")
+        fig_ts = style_plotly(fig_ts)
         st.plotly_chart(fig_ts, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -242,6 +249,7 @@ with tab_mines:
         corr_matrix.columns = [MINE_VAR_LABELS[c] for c in corr_matrix.columns]
         fig_corr = px.imshow(corr_matrix, text_auto=".2f", color_continuous_scale="RdYlGn_r", zmin=-1, zmax=1, aspect="auto")
         fig_corr.update_layout(height=420, margin=dict(t=10, l=10, r=10, b=10))
+        fig_corr = style_plotly(fig_corr)
         st.plotly_chart(fig_corr, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -258,6 +266,7 @@ with tab_mines:
                              color_discrete_sequence=["#009A44"], opacity=0.6)
         fig_sc.update_layout(height=420, xaxis_title=MINE_VAR_LABELS[determinant], yaxis_title="Cout total (DH)",
                               plot_bgcolor="white", paper_bgcolor="white", margin=dict(t=10, l=10, r=10, b=10))
+        fig_sc = style_plotly(fig_sc)
         st.plotly_chart(fig_sc, use_container_width=True)
         corr_val = df_mine[[determinant, "cout_total_mines"]].corr().iloc[0, 1]
         st.caption(f"Coefficient de correlation de Pearson : {corr_val:.3f}")
@@ -286,6 +295,7 @@ with tab_phases:
                                            line=dict(color=colors[i % len(colors)]), mode="lines"))
         fig_ts_p.update_layout(height=380, plot_bgcolor="white", paper_bgcolor="white",
                                 margin=dict(t=10, l=10, r=10, b=10), legend_title_text="")
+        fig_ts_p = style_plotly(fig_ts_p)
         st.plotly_chart(fig_ts_p, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -299,6 +309,7 @@ with tab_phases:
         corr_matrix_p.columns = [labels[c] for c in corr_matrix_p.columns]
         fig_corr_p = px.imshow(corr_matrix_p, text_auto=".2f", color_continuous_scale="RdYlGn_r", zmin=-1, zmax=1, aspect="auto")
         fig_corr_p.update_layout(height=440, margin=dict(t=10, l=10, r=10, b=10))
+        fig_corr_p = style_plotly(fig_corr_p)
         st.plotly_chart(fig_corr_p, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -315,6 +326,7 @@ with tab_phases:
                                color_discrete_sequence=["#3B82F6"], opacity=0.6)
         fig_sc_p.update_layout(height=440, xaxis_title=labels[determinant_p], yaxis_title="Cout total (DH)",
                                 plot_bgcolor="white", paper_bgcolor="white", margin=dict(t=10, l=10, r=10, b=10))
+        fig_sc_p = style_plotly(fig_sc_p)
         st.plotly_chart(fig_sc_p, use_container_width=True)
         corr_val_p = df_phase[[determinant_p, "cout_total"]].corr().iloc[0, 1]
         st.caption(f"Coefficient de correlation de Pearson : {corr_val_p:.3f}")
@@ -424,6 +436,7 @@ with tab_econometrics:
             fig_fit.add_trace(go.Scatter(x=[min_v, max_v], y=[min_v, max_v], mode="lines",
                                           line=dict(color="#D92D20", dash="dash"), name="Ajustement parfait"))
             fig_fit.update_layout(height=340, plot_bgcolor="white", paper_bgcolor="white", margin=dict(t=10, l=10, r=10, b=10))
+            fig_fit = style_plotly(fig_fit)
             st.plotly_chart(fig_fit, use_container_width=True)
     else:
         st.warning("Selectionnez au moins un determinant pour estimer le modele.")
@@ -503,6 +516,7 @@ with tab_predict:
             fig_pred.add_trace(go.Scatter(y=result_df["Predit"], mode="lines+markers", name="Cout predit", line=dict(color="#009A44")))
             fig_pred.update_layout(height=380, plot_bgcolor="white", paper_bgcolor="white",
                                     margin=dict(t=10, l=10, r=10, b=10), xaxis_title="Observations (jeu de test)", yaxis_title="Cout total (DH)")
+            fig_pred = style_plotly(fig_pred)
             st.plotly_chart(fig_pred, use_container_width=True)
 
         with col_imp:
@@ -515,6 +529,7 @@ with tab_predict:
             imp_df = imp_df.sort_values("Importance", ascending=True)
             fig_imp = px.bar(imp_df, x="Importance", y="Variable", orientation="h", color_discrete_sequence=["#3B82F6"])
             fig_imp.update_layout(height=380, plot_bgcolor="white", paper_bgcolor="white", margin=dict(t=10, l=10, r=10, b=10))
+            fig_imp = style_plotly(fig_imp)
             st.plotly_chart(fig_imp, use_container_width=True)
 
         st.markdown("##### Simulation : prediction a partir de nouvelles valeurs")
@@ -593,6 +608,7 @@ with tab_alerts:
         fig_alert.add_hline(y=limit_value, line_dash="dash", line_color="#D92D20",
                              annotation_text="Objectif minimum" if mode == "min" else "Limite maximale")
         fig_alert.update_layout(height=300, plot_bgcolor="white", paper_bgcolor="white", margin=dict(t=30, l=10, r=10, b=10))
+        fig_alert = style_plotly(fig_alert)
         st.plotly_chart(fig_alert, use_container_width=True)
 
     if status in ("alerte", "critique") or (mode == "min" and status in ("alerte", "critique")):

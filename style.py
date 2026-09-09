@@ -217,7 +217,15 @@ input, textarea{ background: var(--ocp-panel-2) !important; color: var(--ocp-ink
 /* ── Barre d'outils Plotly discrète ── */
 .js-plotly-plot .plotly .modebar{ opacity: 0; transition: opacity 200ms ease; }
 .js-plotly-plot:hover .plotly .modebar{ opacity: 1; }
-
+[data-testid="stHeader"]{
+  background: var(--ocp-bg) !important;
+}
+[data-testid="stToolbar"]{
+  background: transparent !important;
+}
+[data-testid="stDecoration"]{
+  background: transparent !important;
+}
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
 </style>
