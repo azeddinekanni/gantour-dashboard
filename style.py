@@ -169,9 +169,26 @@ div[data-baseweb="select"] > div{
   border-color: var(--ocp-line) !important;
   color: var(--ocp-ink) !important;
 }
-div[data-baseweb="popover"] ul{ background: var(--ocp-panel-2) !important; }
-div[data-baseweb="popover"] li{ color: var(--ocp-ink) !important; }
-div[data-baseweb="popover"] li:hover{ background: rgba(0,230,118,0.10) !important; }
+div[data-baseweb="popover"],
+div[data-baseweb="menu"],
+div[data-baseweb="layer"]{
+  background-color: var(--ocp-panel-2) !important;
+}
+div[data-baseweb="popover"] *,
+div[data-baseweb="menu"] *,
+div[data-baseweb="layer"] *{
+  color: var(--ocp-ink) !important;
+}
+ul[role="listbox"], div[role="listbox"]{
+  background-color: var(--ocp-panel-2) !important;
+}
+li[role="option"], div[role="option"]{
+  background-color: var(--ocp-panel-2) !important;
+  color: var(--ocp-ink) !important;
+}
+li[role="option"]:hover, div[role="option"]:hover{
+  background-color: rgba(0,230,118,0.14) !important;
+}
 .stRadio label, .stCheckbox label{ color: var(--ocp-ink) !important; }
 .stRadio [role="radiogroup"] label div:first-child{ border-color: var(--ocp-green) !important; }
 
