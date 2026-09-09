@@ -336,7 +336,10 @@ def run_ols(df, feature_cols, target_col, feature_labels):
 
     vif_data = pd.DataFrame()
     vif_data["Variable"] = [feature_labels[c] for c in feature_cols]
-    vif_data["VIF"] = [variance_inflation_factor(X.values, i) for i in range(X.shape[1])]
+    if len(feature_cols) >= 2:
+       vif_data["VIF"] = [variance_inflation_factor(X.values, i) for i in range(X.shape[1])]
+    else:
+       vif_data["VIF"] = [1.0]
 
     return model, coef_table, vif_data, data
 
