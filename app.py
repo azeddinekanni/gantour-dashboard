@@ -52,20 +52,6 @@ auth.logout_button()
 st.sidebar.divider()
 st.sidebar.caption("Analyse econometrique des determinants des couts et modelisation predictive des couts operationnels sur la chaine de valeur miniere - Site Gantour")
 
-data_issues = get_data_issues()
-
-style.hero(
-    "Chaine de valeur miniere - Site Gantour",
-    "Tableau de bord des couts operationnels",
-    "Extraction (Benguerir, Mzinda, Bouchane) et traitement (Calcination, Sechage, Laverie) - "
-    "Periode du 01/01/2025 au 30/04/2026."
-)
-
-if data_issues:
-    with st.expander("Journal de nettoyage des donnees (anomalies detectees et corrigees)", expanded=False):
-        for issue in data_issues:
-            st.markdown(f'<div class="data-issue">{issue}</div>', unsafe_allow_html=True)
-
 tab_overview, tab_dist, tab_mines, tab_phases, tab_econometrics, tab_predict, tab_alerts = st.tabs(
     ["Vue d'ensemble", "Distribution des donnees", "Mines d'extraction", "Phases de traitement",
      "Analyse econometrique", "Modelisation predictive", "Objectifs & Alertes"]
