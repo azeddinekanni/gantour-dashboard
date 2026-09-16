@@ -1,3 +1,10 @@
+import functools
+
+@functools.lru_cache(maxsize=1)
+def _load_morocco_svg_b64(path):
+    import base64
+    from pathlib import Path
+    return base64.b64encode(Path(path).read_bytes()).decode("ascii")
 import streamlit as st
 
 CSS = """
@@ -21,13 +28,17 @@ CSS = """
   --radius: 16px;
   --shadow-glow: 0 0 22px rgba(0,230,118,0.06);
   --shadow-glow-hover: 0 0 28px rgba(0,230,118,0.14);
+  --ocp-grid-line: rgba(0,230,118,0.05);
 }
 
 @keyframes ocpFadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes ocpPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.65; } }
 
 .stApp{
-  background: var(--ocp-bg);
+  background:
+    linear-gradient(var(--ocp-grid-line) 1px, transparent 1px) 0 0 / 36px 36px,
+    linear-gradient(90deg, var(--ocp-grid-line) 1px, transparent 1px) 0 0 / 36px 36px,
+    var(--ocp-bg);
   font-family: 'Inter', sans-serif;
   color: var(--ocp-ink);
 }
@@ -111,6 +122,13 @@ section[data-testid="stSidebar"] *{ color: #C9D6CF !important; }
 }
 .section-card:hover{ border-color: var(--ocp-line-hover); box-shadow: var(--shadow-glow-hover); }
 
+[data-testid="stVerticalBlockBorderWrapper"]{
+  background: var(--ocp-panel);
+  border-radius: var(--radius);
+  border: 1px solid var(--ocp-line);
+  box-shadow: var(--shadow-glow);
+}
+
 /* ── Badges de statut ── */
 .badge{ display:inline-block; padding: 4px 13px; border-radius:20px; font-size:12px; font-weight:700; border:1px solid transparent; }
 .badge-normal{ background: rgba(0,230,118,0.12); color: var(--ocp-green); border-color: rgba(0,230,118,0.35); text-shadow: 0 0 8px rgba(0,230,118,0.4); }
@@ -118,6 +136,7 @@ section[data-testid="stSidebar"] *{ color: #C9D6CF !important; }
 .badge-alerte{ background: rgba(255,176,32,0.12); color: var(--ocp-orange); border-color: rgba(255,176,32,0.35); text-shadow: 0 0 8px rgba(255,176,32,0.4); }
 .badge-critique{ background: rgba(255,92,92,0.12); color: var(--ocp-red); border-color: rgba(255,92,92,0.35); text-shadow: 0 0 8px rgba(255,92,92,0.4); }
 .badge-inconnu{ background: rgba(141,166,156,0.12); color: var(--ocp-muted); border-color: rgba(141,166,156,0.3); }
+.badge-dot{ display:inline-block; width:7px; height:7px; border-radius:50%; background:currentColor; margin-right:6px; vertical-align:middle; box-shadow:0 0 6px currentColor; }
 
 /* ── Bandeaux d'alerte ── */
 .alert-banner{
@@ -245,6 +264,8 @@ input, textarea{ background: var(--ocp-panel-2) !important; color: var(--ocp-ink
 }
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
+[data-testid="stSpinner"] { color: var(--ocp-green) !important; }
+[data-testid="stSpinner"] svg { color: var(--ocp-green) !important; }
 </style>
 """
 
@@ -286,7 +307,10 @@ def kpi_card(label, value, delta=None, delta_positive_is_bad=True):
 
 
 def badge(status_key, status_label):
-    st.markdown(f'<span class="badge badge-{status_key}">{status_label}</span>', unsafe_allow_html=True)
+    st.markdown(
+        f'<span class="badge badge-{status_key}"><span class="badge-dot"></span>{status_label}</span>',
+        unsafe_allow_html=True
+    )
 
 
 def style_plotly(fig):
@@ -299,3 +323,135 @@ def style_plotly(fig):
         yaxis=dict(gridcolor="rgba(0,230,118,0.10)", linecolor="rgba(0,230,118,0.25)", zerolinecolor="rgba(0,230,118,0.10)"),
     )
     return fig
+def national_value_chain_map(sites, height=460):
+    """
+    Carte schematique legere (aucune dependance a un fichier externe) de la chaine
+    de valeur du phosphate. Contour du pays simplifie (silhouette approximative,
+    calibree sur les memes coordonnees que les sites) pour garantir un affichage
+    instantane. Sans JavaScript. sites = [{"name": str, "production": float,
+    "cost": float}, ...] (sites Gantour)
+    """
+    import html as _html
+    import streamlit.components.v1 as components
+
+    NODES = {
+        "khouribga":   (612.8, 210.0, "mine", "Khouribga"),
+        "benguerir":   (557.8, 245.7, "mine", "Benguerir"),
+        "mzinda":      (521.2, 242.7, "mine", "Mzinda"),
+        "bouchane":    (536.9, 238.2, "mine", "Bouchane"),
+        "jorf_lasfar": (522.0, 180.1, "transform_port", "Jorf Lasfar"),
+        "safi":        (490.5, 232.3, "transform_port", "Safi"),
+        "casablanca":  (576.9, 157.2, "port", "Casablanca"),
+    }
+
+    # Contour schematique (une quinzaine de points, pas une trace geographique
+    # exacte) calibre sur le meme systeme de coordonnees que les sites ci-dessus.
+    country_path = (
+        "M669,22 L730,55 L800,85 L870,120 L855,190 L800,240 "
+        "L743,295 L680,330 L610,340 L556,287 L500,320 L471,356 "
+        "L455,300 L490,232 L470,190 L522,180 L577,157 L616,133 Z"
+    )
+
+    gantour_keys = {"benguerir", "mzinda", "bouchane"}
+    live_data = {s["name"].split(" ")[0].split("-")[0].strip().lower(): s for s in sites}
+
+    def _find_live(label):
+        low = label.lower()
+        for k, v in live_data.items():
+            if k in low or low in k:
+                return v
+        return None
+
+    nodes_svg = ""
+    lines_svg = ""
+
+    kx, ky = NODES["khouribga"][0], NODES["khouribga"][1]
+    jx, jy = NODES["jorf_lasfar"][0], NODES["jorf_lasfar"][1]
+    lines_svg += f'<line x1="{kx}" y1="{ky}" x2="{jx}" y2="{jy}" stroke="#00E676" stroke-width="2.2" marker-end="url(#arrowGreen)" />'
+
+    gx, gy = NODES["benguerir"][0] - 6, NODES["benguerir"][1] + 4
+    sx, sy = NODES["safi"][0], NODES["safi"][1]
+    cx, cy = NODES["casablanca"][0], NODES["casablanca"][1]
+    for (x1, y1, x2, y2) in [(gx, gy, sx, sy), (gx, gy, jx, jy), (jx, jy, cx, cy)]:
+        lines_svg += (
+            f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="#FFB020" '
+            f'stroke-width="1.6" stroke-dasharray="5,4" marker-end="url(#arrowOrange)" />'
+        )
+
+    export_ports = [("jorf_lasfar", -55, -18), ("jorf_lasfar", -50, 10),
+                     ("safi", -55, -12),
+                     ("casablanca", -50, -20)]
+    for key, dx, dy in export_ports:
+        px, py = NODES[key][0], NODES[key][1]
+        lines_svg += (
+            f'<line x1="{px}" y1="{py}" x2="{px + dx}" y2="{py + dy}" stroke="#3B82F6" '
+            f'stroke-width="1.4" stroke-dasharray="4,3" marker-end="url(#arrowBlue)" opacity="0.85" />'
+        )
+
+    icon_map = {"mine": "\u26cf", "transform_port": "\U0001F3ED", "port": "\u2693"}
+    color_map = {"mine": "#00E676", "transform_port": "#FFB020", "port": "#3B82F6"}
+
+    for key, (x, y, ntype, label) in NODES.items():
+        color = color_map[ntype]
+        icon = icon_map[ntype]
+        live = _find_live(label) if key in gantour_keys else None
+        if live:
+            prod = f'{live["production"]:,.0f} t'.replace(",", " ")
+            cost = f'{live["cost"]:,.2f} DH/t'
+            tip_text = f'{prod} &#183; {cost}'
+        elif ntype == "mine":
+            tip_text = "Hors perimetre de l'etude"
+        else:
+            tip_text = {"transform_port": "Transformation / Port", "port": "Port"}[ntype]
+
+        pulse = f'<circle cx="{x}" cy="{y}" r="13" fill="{color}" opacity="0.18" class="mine-pulse" />' if live else ""
+        nodes_svg += (
+            f'<g class="mine-node">'
+            f'{pulse}'
+            f'<circle cx="{x}" cy="{y}" r="6" fill="#0B1310" stroke="{color}" stroke-width="1.6" />'
+            f'<text x="{x}" y="{y + 2.3}" text-anchor="middle" font-size="6.5" fill="#EAF7F0">{icon}</text>'
+            f'<text x="{x}" y="{y - 11}" text-anchor="middle" font-family="Inter, sans-serif" '
+            f'font-size="8" font-weight="800" fill="#EAF7F0" style="text-shadow:0 0 4px #000, 0 0 4px #000;">{_html.escape(label)}</text>'
+            f'<g class="mine-tip" transform="translate({x},{y})">'
+            f'<rect x="-56" y="-32" width="112" height="20" rx="6" fill="rgba(11,19,16,0.96)" '
+            f'stroke="rgba(0,230,118,0.45)" stroke-width="0.8" />'
+            f'<text x="0" y="-18" text-anchor="middle" font-family="Inter, sans-serif" '
+            f'font-size="6.5" fill="#00E676">{tip_text}</text>'
+            f'</g></g>'
+        )
+
+    defs = """
+    <defs>
+        <marker id="arrowGreen" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#00E676"/></marker>
+        <marker id="arrowOrange" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#FFB020"/></marker>
+        <marker id="arrowBlue" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#3B82F6"/></marker>
+    </defs>
+    """
+
+    svg_content = (
+        f'{defs}'
+        f'<path d="{country_path}" fill="#16211A" stroke="rgba(0,230,118,0.35)" stroke-width="1.2" />'
+        f'{lines_svg}{nodes_svg}'
+    )
+
+    style_block = """
+    <style>
+        .mine-pulse { animation: gtPulse 3s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
+        @keyframes gtPulse { 0%,100% { opacity:0.45; transform:scale(1);} 50% { opacity:0.1; transform:scale(1.7);} }
+        .mine-tip { opacity: 0; transition: opacity 150ms ease; pointer-events: none; }
+        .mine-node:hover .mine-tip { opacity: 1; }
+        .mine-node { cursor: pointer; }
+    </style>
+    """
+
+    html_doc = f"""
+    <div style="position:relative;width:100%;height:{height}px;
+        background:#0B1310;border:1px solid rgba(0,230,118,0.16);border-radius:16px;
+        overflow:hidden;box-shadow:0 0 22px rgba(0,230,118,0.06);">
+        <svg viewBox="450 115 210 175" style="width:100%;height:100%;display:block;">
+            {svg_content}
+        </svg>
+    </div>
+    {style_block}
+    """
+    components.html(html_doc, height=height + 10)

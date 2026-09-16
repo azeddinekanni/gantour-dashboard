@@ -209,202 +209,181 @@ def check_authentication():
     if st.session_state.authenticated:
         return True
 
-    _inject_login_css()
-    _render_background()
+    login_placeholder = st.empty()
 
-    col_clock_l, col_clock_r = st.columns([2.4, 1])
-    with col_clock_r:
-        _render_clock()
+    with login_placeholder.container():
+        _inject_login_css()
+        _render_background()
 
-    st.write("")
-    col1, col2, col3 = st.columns([1, 1.7, 0.9])
+        col_clock_l, col_clock_r = st.columns([2.4, 1])
+        with col_clock_r:
+            _render_clock()
 
-    with col1:
-        st.markdown(
-            '<div style="max-width:100%; overflow-wrap:break-word; word-break:break-word; '
-            'font-size:38px;font-weight:800;color:#00FF8C;opacity:0.05;line-height:1.15;'
-            'letter-spacing:0.5px;user-select:none;margin-top:70px;">'
-            'GANTOUR<br>INTELLIGENCE</div>',
-            unsafe_allow_html=True,
-        )
         st.write("")
-        steps = [("AUTHENTIFICATION", True), ("CHARGEMENT DES DONNÉES", False),
-                 ("ANALYSE DES COÛTS", False), ("TABLEAU DE BORD", False)]
-        steps_html = ""
-        for i, (label, active) in enumerate(steps):
-            if active:
-                dot_html = ('<span style="width:8px;height:8px;border-radius:50%;background:#00FF8C;'
-                            'box-shadow:0 0 8px rgba(0,255,140,0.7);flex-shrink:0;"></span>')
-                c = "#00FF8C"
-            else:
-                dot_html = ('<span style="width:8px;height:8px;border-radius:50%;background:transparent;'
-                            'border:1.5px solid #3D4A45;flex-shrink:0;"></span>')
-                c = "#5A6B65"
-            steps_html += (
-                f'<div style="display:flex;align-items:center;gap:10px;">'
-                f'{dot_html}<span style="font-size:10.5px;font-weight:700;letter-spacing:0.8px;color:{c};">{label}</span>'
-                f'</div>'
-            )
-            if i < len(steps) - 1:
-                steps_html += (
-                    '<div style="position:relative;width:1px;height:20px;'
-                    'background:rgba(255,255,255,0.12);margin-left:4px;overflow:hidden;">'
-                    '<div style="position:absolute;left:0;width:1px;height:6px;'
-                    'background:#00FF8C;box-shadow:0 0 6px rgba(0,255,140,0.8);'
-                    f'animation: gtConnectorLight 2.4s ease-in-out {i * 0.5:.1f}s infinite;"></div>'
-                    '</div>'
-                )
-        st.markdown(f'<div>{steps_html}</div>', unsafe_allow_html=True)
+        col1, col2, col3 = st.columns([1, 1.7, 0.9])
 
-    with col2:
-        logo_b64 = _get_logo_base64()
-        badge_html = (
-            f'<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:24px;">'
-            + (f'<img src="data:image/png;base64,{logo_b64}" style="width:40px;height:40px;object-fit:contain;" />' if logo_b64 else "")
-            + '<div style="text-align:left;background:rgba(0,230,118,0.08);border:1px solid rgba(0,230,118,0.25);'
-            'border-radius:8px;padding:4px 10px;">'
-            '<div style="font-size:9px;color:#00E676;font-weight:800;letter-spacing:0.5px;">ANALYTICS ENGINE</div>'
-            '<div style="font-size:8px;color:#8DA69C;">OLS · Random Forest</div>'
-            '<div style="font-size:8px;color:#00FF8C;font-weight:700;">● ONLINE</div>'
-            '</div></div>'
-        )
-        st.markdown(
-            f'<div class="gt-seq-1" style="text-align:center;margin-bottom:4px;">'
-            f'{badge_html}'
-            '<div style="font-size:28px;font-weight:800;color:#E8EDEB;letter-spacing:-0.4px;'
-            'text-shadow:0 0 16px rgba(0,230,118,0.25);">OCP Gantour Intelligence</div>'
-            '<div style="font-size:12.5px;color:#8DA69C;font-weight:600;margin-top:12px;">'
-            'Analyse econometrique des couts operationnels - Site Gantour</div>'
-            '</div>'
-            '<div class="gt-seq-2" style="text-align:center;margin-bottom:30px;">'
-            '<div style="font-size:16px;color:#00C97A;font-weight:800;letter-spacing:1.5px;'
-            'text-shadow:0 0 10px rgba(0,201,122,0.4);">Predict. Assess. Decide.</div>'
-            '</div>',
-            unsafe_allow_html=True,
-        )
-
-        st.markdown('<div class="gt-seq-3 gt-login-card">', unsafe_allow_html=True)
-        with st.container(border=True):
+        with col1:
             st.markdown(
-                '<div style="font-size:14px;font-weight:800;color:#00E676;'
-                'padding-bottom:10px;margin-bottom:16px;border-bottom:1px solid rgba(0,230,118,0.15);">'
-                'Connexion</div>',
+                '<div style="max-width:100%; overflow-wrap:break-word; word-break:break-word; '
+                'font-size:38px;font-weight:800;color:#00FF8C;opacity:0.05;line-height:1.15;'
+                'letter-spacing:0.5px;user-select:none;margin-top:70px;">'
+                'GANTOUR<br>INTELLIGENCE</div>',
                 unsafe_allow_html=True,
             )
-            with st.form("login_form", border=False):
-                _icon_user = (
-                    '<svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">'
-                    '<defs><radialGradient id="gUser" cx="35%" cy="28%" r="75%">'
-                    '<stop offset="0%" stop-color="#8CFFC0"/><stop offset="55%" stop-color="#00C97A"/>'
-                    '<stop offset="100%" stop-color="#00693A"/></radialGradient></defs>'
-                    '<circle cx="12" cy="12" r="11" fill="url(#gUser)" stroke="#0A2F1D" stroke-width="0.6"/>'
-                    '<circle cx="12" cy="9.3" r="3.1" fill="#FFFFFF"/>'
-                    '<path d="M5.3 19c0-3.6 3-6.2 6.7-6.2s6.7 2.6 6.7 6.2" fill="#FFFFFF"/></svg>'
+            st.write("")
+            steps = [("AUTHENTIFICATION", True), ("CHARGEMENT DES DONNÉES", False),
+                     ("ANALYSE DES COÛTS", False), ("TABLEAU DE BORD", False)]
+            steps_html = ""
+            for i, (label, active) in enumerate(steps):
+                if active:
+                    dot_html = ('<span style="width:8px;height:8px;border-radius:50%;background:#00FF8C;'
+                                'box-shadow:0 0 8px rgba(0,255,140,0.7);flex-shrink:0;"></span>')
+                    c = "#00FF8C"
+                else:
+                    dot_html = ('<span style="width:8px;height:8px;border-radius:50%;background:transparent;'
+                                'border:1.5px solid #3D4A45;flex-shrink:0;"></span>')
+                    c = "#5A6B65"
+                steps_html += (
+                    f'<div style="display:flex;align-items:center;gap:10px;">'
+                    f'{dot_html}<span style="font-size:10.5px;font-weight:700;letter-spacing:0.8px;color:{c};">{label}</span>'
+                    f'</div>'
                 )
-                _icon_lock = (
-                    '<svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">'
-                    '<defs><radialGradient id="gLock" cx="35%" cy="28%" r="75%">'
-                    '<stop offset="0%" stop-color="#8CFFC0"/><stop offset="55%" stop-color="#00C97A"/>'
-                    '<stop offset="100%" stop-color="#00693A"/></radialGradient></defs>'
-                    '<circle cx="12" cy="12" r="11" fill="url(#gLock)" stroke="#0A2F1D" stroke-width="0.6"/>'
-                    '<rect x="7.8" y="11" width="8.4" height="6.6" rx="1.3" fill="#FFFFFF"/>'
-                    '<path d="M9.2 11V8.9a2.8 2.8 0 0 1 5.6 0V11" fill="none" stroke="#FFFFFF" '
-                    'stroke-width="1.5" stroke-linecap="round"/></svg>'
-                )
+                if i < len(steps) - 1:
+                    steps_html += (
+                        '<div style="position:relative;width:1px;height:20px;'
+                        'background:rgba(255,255,255,0.12);margin-left:4px;overflow:hidden;">'
+                        '<div style="position:absolute;left:0;width:1px;height:6px;'
+                        'background:#00FF8C;box-shadow:0 0 6px rgba(0,255,140,0.8);'
+                        f'animation: gtConnectorLight 2.4s ease-in-out {i * 0.5:.1f}s infinite;"></div>'
+                        '</div>'
+                    )
+            st.markdown(f'<div>{steps_html}</div>', unsafe_allow_html=True)
+
+        with col2:
+            logo_b64 = _get_logo_base64()
+            badge_html = (
+                f'<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:24px;">'
+                + (f'<img src="data:image/png;base64,{logo_b64}" style="width:40px;height:40px;object-fit:contain;" />' if logo_b64 else "")
+                + '<div style="text-align:left;background:rgba(0,230,118,0.08);border:1px solid rgba(0,230,118,0.25);'
+                'border-radius:8px;padding:4px 10px;">'
+                '<div style="font-size:9px;color:#00E676;font-weight:800;letter-spacing:0.5px;">ANALYTICS ENGINE</div>'
+                '<div style="font-size:8px;color:#8DA69C;">OLS · Random Forest</div>'
+                '<div style="font-size:8px;color:#00FF8C;font-weight:700;">● ONLINE</div>'
+                '</div></div>'
+            )
+            st.markdown(
+                f'<div class="gt-seq-1" style="text-align:center;margin-bottom:4px;">'
+                f'{badge_html}'
+                '<div style="font-size:28px;font-weight:800;color:#E8EDEB;letter-spacing:-0.4px;'
+                'text-shadow:0 0 16px rgba(0,230,118,0.25);">OCP Gantour Intelligence</div>'
+                '<div style="font-size:12.5px;color:#8DA69C;font-weight:600;margin-top:12px;">'
+                'Analyse econometrique des couts operationnels - Site Gantour</div>'
+                '</div>'
+                '<div class="gt-seq-2" style="text-align:center;margin-bottom:30px;">'
+                '<div style="font-size:16px;color:#00C97A;font-weight:800;letter-spacing:1.5px;'
+                'text-shadow:0 0 10px rgba(0,201,122,0.4);">Predict. Assess. Decide.</div>'
+                '</div>',
+                unsafe_allow_html=True,
+            )
+
+            st.markdown('<div class="gt-seq-3 gt-login-card">', unsafe_allow_html=True)
+            with st.container(border=True):
                 st.markdown(
-                    f'<div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">'
-                    f'{_icon_user}<span style="font-size:13px;font-weight:700;color:#00E676;">Utilisateur</span></div>',
+                    '<div style="font-size:14px;font-weight:800;color:#00E676;'
+                    'padding-bottom:10px;margin-bottom:16px;border-bottom:1px solid rgba(0,230,118,0.15);">'
+                    'Connexion</div>',
                     unsafe_allow_html=True,
                 )
-                username = st.text_input("Utilisateur", placeholder="ex. admin",
-                                          label_visibility="collapsed").strip()
-                st.markdown(
-                    f'<div style="display:flex;align-items:center;gap:8px;margin:10px 0 2px;">'
-                    f'{_icon_lock}<span style="font-size:13px;font-weight:700;color:#00E676;">Mot de passe</span></div>',
-                    unsafe_allow_html=True,
-                )
-                password = st.text_input("Mot de passe", type="password", placeholder="••••••••",
-                                          label_visibility="collapsed")
-                st.write("")
-                submitted = st.form_submit_button("Accéder à la plateforme →", use_container_width=True)
+                with st.form("login_form", border=False):
+                    _icon_user = (
+                        '<svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">'
+                        '<defs><radialGradient id="gUser" cx="35%" cy="28%" r="75%">'
+                        '<stop offset="0%" stop-color="#8CFFC0"/><stop offset="55%" stop-color="#00C97A"/>'
+                        '<stop offset="100%" stop-color="#00693A"/></radialGradient></defs>'
+                        '<circle cx="12" cy="12" r="11" fill="url(#gUser)" stroke="#0A2F1D" stroke-width="0.6"/>'
+                        '<circle cx="12" cy="9.3" r="3.1" fill="#FFFFFF"/>'
+                        '<path d="M5.3 19c0-3.6 3-6.2 6.7-6.2s6.7 2.6 6.7 6.2" fill="#FFFFFF"/></svg>'
+                    )
+                    _icon_lock = (
+                        '<svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">'
+                        '<defs><radialGradient id="gLock" cx="35%" cy="28%" r="75%">'
+                        '<stop offset="0%" stop-color="#8CFFC0"/><stop offset="55%" stop-color="#00C97A"/>'
+                        '<stop offset="100%" stop-color="#00693A"/></radialGradient></defs>'
+                        '<circle cx="12" cy="12" r="11" fill="url(#gLock)" stroke="#0A2F1D" stroke-width="0.6"/>'
+                        '<rect x="7.8" y="11" width="8.4" height="6.6" rx="1.3" fill="#FFFFFF"/>'
+                        '<path d="M9.2 11V8.9a2.8 2.8 0 0 1 5.6 0V11" fill="none" stroke="#FFFFFF" '
+                        'stroke-width="1.5" stroke-linecap="round"/></svg>'
+                    )
+                    st.markdown(
+                        f'<div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">'
+                        f'{_icon_user}<span style="font-size:13px;font-weight:700;color:#00E676;">Utilisateur</span></div>',
+                        unsafe_allow_html=True,
+                    )
+                    username = st.text_input("Utilisateur", placeholder="ex. admin",
+                                              label_visibility="collapsed").strip()
+                    st.markdown(
+                        f'<div style="display:flex;align-items:center;gap:8px;margin:10px 0 2px;">'
+                        f'{_icon_lock}<span style="font-size:13px;font-weight:700;color:#00E676;">Mot de passe</span></div>',
+                        unsafe_allow_html=True,
+                    )
+                    password = st.text_input("Mot de passe", type="password", placeholder="••••••••",
+                                              label_visibility="collapsed")
+                    st.write("")
+                    submitted = st.form_submit_button("Accéder à la plateforme →", use_container_width=True)
 
-                if submitted:
-                    user = USERS.get(username)
-                    if user and user["password_hash"] == _hash(password):
-                        st.markdown(
-                            """
-                            <div style="position:fixed;inset:0;z-index:99999;background:#070B12;
-                                display:flex;flex-direction:column;align-items:center;justify-content:center;
-                                animation: gtAccessFadeOut 0.6s ease-out 2.3s forwards;">
-                                <div style="font-size:21px;font-weight:800;color:#00FF8C;letter-spacing:2.5px;
-                                    text-shadow:0 0 22px rgba(0,255,140,0.6);
-                                    animation: gtAccessPop 0.5s ease-out;">AUTHENTIFICATION REUSSIE</div>
-                                <div style="margin-top:20px;font-size:12px;color:#8DA69C;opacity:0;
-                                    animation: gtLineFade 0.4s ease-out 0.4s forwards;">Chargement des données mines...</div>
-                                <div style="font-size:12px;color:#8DA69C;opacity:0;
-                                    animation: gtLineFade 0.4s ease-out 0.75s forwards;">Initialisation des modèles...</div>
-                                <div style="font-size:12px;color:#8DA69C;opacity:0;
-                                    animation: gtLineFade 0.4s ease-out 1.1s forwards;">Ouverture du tableau de bord...</div>
-                                <div style="width:240px;height:4px;background:#1B2530;border-radius:4px;
-                                    overflow:hidden;margin-top:22px;">
-                                    <div style="height:100%;background:#00FF8C;border-radius:4px;
-                                        box-shadow:0 0 8px rgba(0,255,140,0.6);
-                                        animation: gtBarFill 1.7s ease-out forwards;"></div>
-                                </div>
-                            </div>
-                            """,
-                            unsafe_allow_html=True,
-                        )
-                        time.sleep(2.0)
-                        st.session_state.authenticated = True
-                        st.session_state.username = username
-                        st.session_state.role = user["role"]
-                        st.session_state.full_name = user["full_name"]
-                        st.rerun()
-                    else:
-                        st.markdown(
-                            '<div style="background:rgba(255,92,92,0.12);border:1px solid rgba(255,92,92,0.4);'
-                            'border-radius:10px;padding:12px 16px;margin-top:8px;animation: gtErrorPop 0.35s ease-out;">'
-                            '<div style="font-size:13px;font-weight:800;color:#FF5C5C;">Accès refusé</div>'
-                            '<div style="font-size:12px;color:#E8EDEB;margin-top:2px;">'
-                            'Identifiant ou mot de passe incorrect.</div></div>',
-                            unsafe_allow_html=True,
-                        )
-        st.markdown('</div>', unsafe_allow_html=True)
+                    if submitted:
+                        user = USERS.get(username)
+                        if user and user["password_hash"] == _hash(password):
+                            st.session_state.authenticated = True
+                            st.session_state.username = username
+                            st.session_state.role = user["role"]
+                            st.session_state.full_name = user["full_name"]
+                            login_placeholder.empty()
+                            st.rerun()
+                        else:
+                            st.markdown(
+                                '<div style="background:rgba(255,92,92,0.12);border:1px solid rgba(255,92,92,0.4);'
+                                'border-radius:10px;padding:12px 16px;margin-top:8px;animation: gtErrorPop 0.35s ease-out;">'
+                                '<div style="font-size:13px;font-weight:800;color:#FF5C5C;">Accès refusé</div>'
+                                '<div style="font-size:12px;color:#E8EDEB;margin-top:2px;">'
+                                'Identifiant ou mot de passe incorrect.</div></div>',
+                                unsafe_allow_html=True,
+                            )
+            st.markdown('</div>', unsafe_allow_html=True)
 
+            st.markdown(
+                '<div style="text-align:center;margin-top:22px;font-size:11px;color:#8DA69C;letter-spacing:0.3px;">'
+                'Version 1.0 &middot; Connexion sécurisée &middot; &copy; OCP Gantour Intelligence</div>',
+                unsafe_allow_html=True,
+            )
+
+        _term_ts = time.strftime("%H:%M:%S")
+        _term_checks = ["Connexion sécurisée établie", "Base de données mines chargée",
+                         "Modèles économétriques prêts", "Tableau de bord initialisé"]
+        _term_lines_html = "".join(
+            f'<div style="opacity:0;animation: gtTermLine 0.4s ease-out {0.3 + i * 0.25:.2f}s forwards;">'
+            f'<span style="color:#00FF8C;">✔</span> {c}</div>'
+            for i, c in enumerate(_term_checks)
+        )
         st.markdown(
-            '<div style="text-align:center;margin-top:22px;font-size:11px;color:#8DA69C;letter-spacing:0.3px;">'
-            'Version 1.0 &middot; Connexion sécurisée &middot; &copy; OCP Gantour Intelligence</div>',
+            f"""
+            <div style="position:fixed;bottom:18px;left:26px;z-index:1;
+                font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#8DA69C;
+                background:rgba(7,11,18,0.5);border:1px solid rgba(0,230,118,0.12);
+                border-radius:8px;padding:10px 14px;max-width:260px;pointer-events:none;">
+                <div style="color:#5A6B65;margin-bottom:4px;">[{_term_ts}]</div>
+                <div style="color:#E8EDEB;margin-bottom:6px;">&gt; Connexion...</div>
+                {_term_lines_html}
+                <div style="margin-top:10px;color:#00E676;font-weight:700;font-size:9.5px;letter-spacing:0.5px;">
+                    AUTHENTIFICATION</div>
+                <div style="width:100px;height:5px;background:#1B2530;border-radius:4px;overflow:hidden;margin-top:3px;">
+                    <div style="height:100%;background:#00FF8C;border-radius:4px;
+                        animation: gtBarFill 3.5s ease-out 1s forwards;width:0%;"></div>
+                </div>
+            </div>
+            """,
             unsafe_allow_html=True,
         )
-
-    _term_ts = time.strftime("%H:%M:%S")
-    _term_checks = ["Connexion sécurisée établie", "Base de données mines chargée",
-                     "Modèles économétriques prêts", "Tableau de bord initialisé"]
-    _term_lines_html = "".join(
-        f'<div style="opacity:0;animation: gtTermLine 0.4s ease-out {0.3 + i * 0.25:.2f}s forwards;">'
-        f'<span style="color:#00FF8C;">✔</span> {c}</div>'
-        for i, c in enumerate(_term_checks)
-    )
-    st.markdown(
-        f"""
-        <div style="position:fixed;bottom:18px;left:26px;z-index:1;
-            font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#8DA69C;
-            background:rgba(7,11,18,0.5);border:1px solid rgba(0,230,118,0.12);
-            border-radius:8px;padding:10px 14px;max-width:260px;pointer-events:none;">
-            <div style="color:#5A6B65;margin-bottom:4px;">[{_term_ts}]</div>
-            <div style="color:#E8EDEB;margin-bottom:6px;">&gt; Connexion...</div>
-            {_term_lines_html}
-            <div style="margin-top:10px;color:#00E676;font-weight:700;font-size:9.5px;letter-spacing:0.5px;">
-                AUTHENTIFICATION</div>
-            <div style="width:100px;height:5px;background:#1B2530;border-radius:4px;overflow:hidden;margin-top:3px;">
-                <div style="height:100%;background:#00FF8C;border-radius:4px;
-                    animation: gtBarFill 3.5s ease-out 1s forwards;width:0%;"></div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
 
     return False
 
