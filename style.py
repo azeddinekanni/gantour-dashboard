@@ -323,29 +323,39 @@ def style_plotly(fig):
         yaxis=dict(gridcolor="rgba(0,230,118,0.10)", linecolor="rgba(0,230,118,0.25)", zerolinecolor="rgba(0,230,118,0.10)"),
     )
     return fig
-def national_value_chain_map(sites, height=460):
+def national_value_chain_map(sites, phases=None, height=460):
     """
     Carte schematique legere (aucune dependance a un fichier externe) de la chaine
     de valeur du phosphate. Contour du pays simplifie (silhouette approximative,
     calibree sur les memes coordonnees que les sites) pour garantir un affichage
-    instantane. Sans JavaScript. sites = [{"name": str, "production": float,
-    "cost": float}, ...] (sites Gantour)
+    instantane. Sans JavaScript.
+    sites = [{"name": str, "production": float, "cost": float}, ...] (mines Gantour)
+    phases = [{"name": "UC"/"US"/"UL", "production": float, "cost": float}, ...]
     """
     import html as _html
     import streamlit.components.v1 as components
 
+    phases = phases or []
+    phases_by_code = {p["name"]: p for p in phases}
+
     NODES = {
         "khouribga":   (612.8, 210.0, "mine", "Khouribga"),
-        "benguerir":   (557.8, 245.7, "mine", "Benguerir"),
-        "mzinda":      (521.2, 242.7, "mine", "Mzinda"),
-        "bouchane":    (536.9, 238.2, "mine", "Bouchane"),
+        "benguerir":   (566.0, 250.0, "mine", "Benguerir"),
+        "bouchane":    (543.0, 233.0, "mine", "Bouchane"),
+        "mzinda":      (513.0, 250.0, "mine", "Mzinda"),
+        "youssoufia":  (541.0, 276.0, "usine_ville", "Youssoufia"),
         "jorf_lasfar": (522.0, 180.1, "transform_port", "Jorf Lasfar"),
         "safi":        (490.5, 232.3, "transform_port", "Safi"),
         "casablanca":  (576.9, 157.2, "port", "Casablanca"),
     }
 
-    # Contour schematique (une quinzaine de points, pas une trace geographique
-    # exacte) calibre sur le meme systeme de coordonnees que les sites ci-dessus.
+    # Sous-unites de traitement du phosphate a Youssoufia
+    PHASE_NODES = {
+        "UC": (533.0, 291.0, "Calcination (UC)"),
+        "US": (541.0, 296.0, "Sechage (US)"),
+        "UL": (549.0, 291.0, "Laverie (UL)"),
+    }
+
     country_path = (
         "M669,22 L730,55 L800,85 L870,120 L855,190 L800,240 "
         "L743,295 L680,330 L610,340 L556,287 L500,320 L471,356 "
@@ -369,12 +379,20 @@ def national_value_chain_map(sites, height=460):
     jx, jy = NODES["jorf_lasfar"][0], NODES["jorf_lasfar"][1]
     lines_svg += f'<line x1="{kx}" y1="{ky}" x2="{jx}" y2="{jy}" stroke="#00E676" stroke-width="2.2" marker-end="url(#arrowGreen)" />'
 
-    gx, gy = NODES["benguerir"][0] - 6, NODES["benguerir"][1] + 4
-    sx, sy = NODES["safi"][0], NODES["safi"][1]
-    cx, cy = NODES["casablanca"][0], NODES["casablanca"][1]
-    for (x1, y1, x2, y2) in [(gx, gy, sx, sy), (gx, gy, jx, jy), (jx, jy, cx, cy)]:
+    yx, yy = NODES["youssoufia"][0], NODES["youssoufia"][1]
+    for mine_key in ["benguerir", "mzinda", "bouchane"]:
+        mx, my = NODES[mine_key][0], NODES[mine_key][1]
         lines_svg += (
-            f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="#FFB020" '
+            f'<line x1="{mx}" y1="{my}" x2="{yx}" y2="{yy}" stroke="#00E676" '
+            f'stroke-width="1.8" marker-end="url(#arrowGreen)" />'
+        )
+
+    sx, sy = NODES["safi"][0], NODES["safi"][1]
+    jx2, jy2 = NODES["jorf_lasfar"][0], NODES["jorf_lasfar"][1]
+    cx, cy = NODES["casablanca"][0], NODES["casablanca"][1]
+    for (x2, y2) in [(sx, sy), (jx2, jy2), (cx, cy)]:
+        lines_svg += (
+            f'<line x1="{yx}" y1="{yy}" x2="{x2}" y2="{y2}" stroke="#FFB020" '
             f'stroke-width="1.6" stroke-dasharray="5,4" marker-end="url(#arrowOrange)" />'
         )
 
@@ -388,8 +406,8 @@ def national_value_chain_map(sites, height=460):
             f'stroke-width="1.4" stroke-dasharray="4,3" marker-end="url(#arrowBlue)" opacity="0.85" />'
         )
 
-    icon_map = {"mine": "\u26cf", "transform_port": "\U0001F3ED", "port": "\u2693"}
-    color_map = {"mine": "#00E676", "transform_port": "#FFB020", "port": "#3B82F6"}
+    icon_map = {"mine": "\u26cf", "transform_port": "\U0001F3ED", "port": "\u2693", "usine_ville": "\U0001F3ED"}
+    color_map = {"mine": "#00E676", "transform_port": "#FFB020", "port": "#3B82F6", "usine_ville": "#FFB020"}
 
     for key, (x, y, ntype, label) in NODES.items():
         color = color_map[ntype]
@@ -401,6 +419,8 @@ def national_value_chain_map(sites, height=460):
             tip_text = f'{prod} &#183; {cost}'
         elif ntype == "mine":
             tip_text = "Hors perimetre de l'etude"
+        elif ntype == "usine_ville":
+            tip_text = "3 unites : UC, US, UL (survolez ci-dessous)"
         else:
             tip_text = {"transform_port": "Transformation / Port", "port": "Port"}[ntype]
 
@@ -410,13 +430,36 @@ def national_value_chain_map(sites, height=460):
             f'{pulse}'
             f'<circle cx="{x}" cy="{y}" r="6" fill="#0B1310" stroke="{color}" stroke-width="1.6" />'
             f'<text x="{x}" y="{y + 2.3}" text-anchor="middle" font-size="6.5" fill="#EAF7F0">{icon}</text>'
-            f'<text x="{x}" y="{y - 11}" text-anchor="middle" font-family="Inter, sans-serif" '
+            f'<text class="mine-label" x="{x}" y="{y - 11}" text-anchor="middle" font-family="Inter, sans-serif" '
             f'font-size="8" font-weight="800" fill="#EAF7F0" style="text-shadow:0 0 4px #000, 0 0 4px #000;">{_html.escape(label)}</text>'
             f'<g class="mine-tip" transform="translate({x},{y})">'
-            f'<rect x="-56" y="-32" width="112" height="20" rx="6" fill="rgba(11,19,16,0.96)" '
+            f'<rect x="-58" y="-46" width="116" height="18" rx="6" fill="rgba(11,19,16,0.97)" '
             f'stroke="rgba(0,230,118,0.45)" stroke-width="0.8" />'
-            f'<text x="0" y="-18" text-anchor="middle" font-family="Inter, sans-serif" '
+            f'<text x="0" y="-34" text-anchor="middle" font-family="Inter, sans-serif" '
             f'font-size="6.5" fill="#00E676">{tip_text}</text>'
+            f'</g></g>'
+        )
+
+    for code, (x, y, full_label) in PHASE_NODES.items():
+        p = phases_by_code.get(code)
+        if p:
+            prod = f'{p["production"]:,.0f} t'.replace(",", " ")
+            cost = f'{p["cost"]:,.2f} DH/t'
+            tip_text = f'{prod} &#183; {cost}'
+        else:
+            tip_text = "Donnees indisponibles"
+        nodes_svg += (
+            f'<g class="mine-node">'
+            f'<circle cx="{x}" cy="{y}" r="4" fill="#0B1310" stroke="#FFB020" stroke-width="1.3" />'
+            f'<text class="mine-label" x="{x}" y="{y - 7}" text-anchor="middle" font-family="Inter, sans-serif" '
+            f'font-size="6" font-weight="800" fill="#EAF7F0" style="text-shadow:0 0 4px #000, 0 0 4px #000;">{code}</text>'
+            f'<g class="mine-tip" transform="translate({x},{y})">'
+            f'<rect x="-54" y="-46" width="108" height="26" rx="5" fill="rgba(11,19,16,0.97)" '
+            f'stroke="rgba(255,176,32,0.5)" stroke-width="0.8" />'
+            f'<text x="0" y="-35" text-anchor="middle" font-family="Inter, sans-serif" '
+            f'font-size="6" font-weight="700" fill="#FFB020">{_html.escape(full_label)}</text>'
+            f'<text x="0" y="-25" text-anchor="middle" font-family="Inter, sans-serif" '
+            f'font-size="6" fill="#FFE1A8">{tip_text}</text>'
             f'</g></g>'
         )
 
@@ -440,6 +483,7 @@ def national_value_chain_map(sites, height=460):
         @keyframes gtPulse { 0%,100% { opacity:0.45; transform:scale(1);} 50% { opacity:0.1; transform:scale(1.7);} }
         .mine-tip { opacity: 0; transition: opacity 150ms ease; pointer-events: none; }
         .mine-node:hover .mine-tip { opacity: 1; }
+        .mine-node:hover .mine-label { opacity: 0; transition: opacity 100ms ease; }
         .mine-node { cursor: pointer; }
     </style>
     """
@@ -448,7 +492,7 @@ def national_value_chain_map(sites, height=460):
     <div style="position:relative;width:100%;height:{height}px;
         background:#0B1310;border:1px solid rgba(0,230,118,0.16);border-radius:16px;
         overflow:hidden;box-shadow:0 0 22px rgba(0,230,118,0.06);">
-        <svg viewBox="450 115 210 175" style="width:100%;height:100%;display:block;">
+        <svg viewBox="435 95 235 235" style="width:100%;height:100%;display:block;">
             {svg_content}
         </svg>
     </div>

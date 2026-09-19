@@ -100,7 +100,8 @@ with tab_overview:
     st.caption(
         "Carte schematique (positions approximatives, a but illustratif) situant le perimetre "
         "Gantour dans la chaine de valeur nationale : extraction, transformation et exportation. "
-        "Seuls les sites Bouchane, Benguerir et Mzinda affichent des donnees issues du modele. "
+        "Les sites Bouchane, Benguerir, Mzinda ainsi que les unites de traitement de Youssoufia "
+        "(UC, US, UL) affichent des donnees issues du modele. "
         "Passez la souris sur un site pour voir le detail."
     )
     sites_data = []
@@ -109,8 +110,17 @@ with tab_overview:
         prod = df_site["production_mines"].sum()
         cost = df_site["cout_unitaire_mines"].mean()
         sites_data.append({"name": label, "production": prod, "cost": cost})
-    style.national_value_chain_map(sites_data)
 
+    phases_data = []
+    for code, dfp in [("UC", uc_df), ("US", us_df), ("UL", ul_df)]:
+        last_p = dfp[dfp["date"] > dfp["date"].max() - pd.Timedelta(days=30)]
+        phases_data.append({
+            "name": code,
+            "production": last_p["production"].sum(),
+            "cost": last_p["cout_unitaire"].mean()
+        })
+
+    style.national_value_chain_map(sites_data, phases_data)
     legend_cols = st.columns(3)
     legend_items = [
         ("\u26cf Mine (donnees en direct)", "#00E676"),
