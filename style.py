@@ -1,4 +1,6 @@
 import functools
+import base64
+import datetime
 
 @functools.lru_cache(maxsize=1)
 def _load_morocco_svg_b64(path):
@@ -274,13 +276,39 @@ def inject():
     st.markdown(CSS, unsafe_allow_html=True)
 
 
-def hero(eyebrow, title, subtitle):
+def platform_hero(title, subtitle_items, status_label, status_text, status_color="#FFB020", logo_b64=None):
+    now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+    subtitle_html = " &#183; ".join(subtitle_items)
+    logo_html = (
+        f'<div style="width:52px;height:52px;background:#FFFFFF;border-radius:12px;'
+        f'display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">'
+        f'<img src="data:image/png;base64,{logo_b64}" style="width:80%;height:80%;object-fit:contain;" />'
+        f'</div>'
+    ) if logo_b64 else ""
+
     st.markdown(
         f"""
-        <div class="ocp-hero">
-            <div class="ocp-hero-eyebrow">{eyebrow}</div>
-            <div class="ocp-hero-title">{title}</div>
-            <div class="ocp-hero-sub">{subtitle}</div>
+        <div class="ocp-hero" style="display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:16px;">
+                {logo_html}
+                <div>
+                    <div style="font-size:22px;font-weight:800;color:#F3FFF8;letter-spacing:-0.3px;">{title}</div>
+                    <div style="font-size:12.5px;color:var(--ocp-muted);margin-top:4px;font-weight:600;">{subtitle_html}</div>
+                </div>
+            </div>
+            <div style="text-align:right;">
+                <span style="display:inline-flex;align-items:center;gap:6px;background:rgba(0,230,118,0.12);
+                    border:1px solid rgba(0,230,118,0.35);border-radius:20px;padding:4px 12px;font-size:11px;
+                    font-weight:800;color:var(--ocp-green);">
+                    <span style="width:6px;height:6px;border-radius:50%;background:var(--ocp-green);
+                        box-shadow:0 0 6px var(--ocp-green);"></span> LIVE
+                </span>
+                <div style="font-size:11px;color:var(--ocp-muted);margin-top:8px;font-weight:600;">Mise a jour : {now_str}</div>
+                <div style="font-size:9.5px;color:var(--ocp-muted);margin-top:10px;letter-spacing:0.8px;text-transform:uppercase;">{status_label}</div>
+                <span style="display:inline-block;margin-top:4px;background:{status_color}22;
+                    border:1px solid {status_color}88;border-radius:20px;padding:4px 14px;font-size:12px;
+                    font-weight:700;color:{status_color};">&#9679; {status_text}</span>
+            </div>
         </div>
         """,
         unsafe_allow_html=True

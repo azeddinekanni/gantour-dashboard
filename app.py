@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 load_dotenv()
 
+import base64
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
@@ -74,6 +75,23 @@ with tab_overview:
     total_cost_30 = last_30["cout_total_mines"].sum()
     total_cost_prev = prev_30["cout_total_mines"].sum()
     cost_delta = ((total_cost_30 - total_cost_prev) / total_cost_prev * 100) if total_cost_prev else 0
+
+    if cost_delta > 5:
+        _status_text, _status_color = "Couts en hausse", "#FF5C5C"
+    elif cost_delta < -5:
+        _status_text, _status_color = "Couts maitrises", "#00E676"
+    else:
+        _status_text, _status_color = "Stable", "#FFB020"
+
+    _logo_b64 = base64.b64encode(LOGO_PATH.read_bytes()).decode() if LOGO_PATH.exists() else None
+    style.platform_hero(
+        "Gantour Intelligence Platform",
+        ["Analyse econometrique", "Modelisation predictive", "Aide a la decision"],
+        "STATUT OPERATIONNEL",
+        _status_text,
+        _status_color,
+        _logo_b64
+    )
 
     total_prod_30 = last_30["production_mines"].sum()
     total_prod_prev = prev_30["production_mines"].sum()
