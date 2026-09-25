@@ -21,6 +21,7 @@ import style
 import auth
 import alerts
 import market_tab
+import alerts_tab
 from data_loader import (
     build_mines_table, build_phase_table, get_data_issues,
     MINE_LABELS, PHASE_LABELS, MINE_VAR_LABELS, PHASE_VAR_LABELS_UC_US, PHASE_VAR_LABELS_UL
@@ -588,98 +589,9 @@ with tab_predict:
             st.warning("Selectionnez au moins une variable explicative.")
 
 with tab_alerts:
-    with st.container(border=True):
-        st.markdown("#### Objectifs de production et limites de consommation")
-        st.caption(
-            "Definissez un objectif de production ou une limite journaliere de consommation pour un site ou une phase. "
-            "Le systeme compare automatiquement la derniere valeur enregistree a ce seuil et declenche une alerte "
-            "envoyee aux managers en cas de depassement."
-        )
-
-        alert_scope = st.radio("Perimetre", ["Mines d'extraction", "Phases de traitement"], horizontal=True, key="alert_scope")
-
-        if alert_scope == "Mines d'extraction":
-            alert_site = st.selectbox("Site", options=list(MINE_LABELS.keys()), format_func=lambda x: MINE_LABELS[x], key="alert_site")
-            df_alert = mines_df[mines_df["mines"] == alert_site]
-            labels_a = MINE_VAR_LABELS
-            site_label_a = MINE_LABELS[alert_site]
-        else:
-            alert_phase = st.selectbox("Phase", options=["UC", "US", "UL"], format_func=lambda x: PHASE_LABELS[x], key="alert_phase")
-            df_alert = {"UC": uc_df, "US": us_df, "UL": ul_df}[alert_phase]
-            labels_a = PHASE_VAR_LABELS_UL if alert_phase == "UL" else PHASE_VAR_LABELS_UC_US
-            site_label_a = PHASE_LABELS[alert_phase]
-
-        var_a = st.selectbox("Variable a surveiller", options=list(labels_a.keys()), format_func=lambda x: labels_a[x], key="alert_var")
-        is_production_target = "production" in var_a
-
-        latest_row = df_alert.sort_values("date").iloc[-1]
-        latest_value = latest_row[var_a]
-        latest_date = latest_row["date"]
-        historical_mean = df_alert[var_a].mean()
-        historical_p90 = df_alert[var_a].quantile(0.9)
-
-        col_cfg, col_status = st.columns([1, 1.3])
-        with col_cfg:
-            st.markdown("##### Configuration du seuil")
-            mode = "min" if is_production_target else "max"
-            default_limit = float(historical_p90) if mode == "max" else float(historical_mean)
-            limit_value = st.number_input(
-                f"{'Objectif minimum de production' if mode == 'min' else 'Limite journaliere maximale'} ({labels_a[var_a]})",
-                value=round(default_limit, 2), key="alert_limit"
-            )
-            st.caption(f"Moyenne historique : {historical_mean:,.2f} - 90e centile : {historical_p90:,.2f}")
-            recipients_raw = st.text_input("Emails des managers (separes par une virgule)", value="manager.gantour@ocpgroup.ma", key="alert_recipients")
-
-        status, ratio = alerts.evaluate_threshold(latest_value, limit_value, mode=mode)
-
-        with col_status:
-            st.markdown("##### Etat actuel")
-            st.markdown(
-                f'<div class="alert-banner alert-{"critique" if status == "critique" else ("vigilance" if status in ("vigilance", "alerte") else "normal")}">'
-                f'{site_label_a} - {labels_a[var_a]} : {latest_value:,.2f} le {latest_date.strftime("%d/%m/%Y")} '
-                f'(seuil : {limit_value:,.2f}, ratio {ratio * 100:,.0f}%)'
-                f'</div>',
-                unsafe_allow_html=True
-            )
-            style.badge(status, alerts.STATUS_LABELS.get(status, status))
-
-            fig_alert = go.Figure()
-            fig_alert.add_trace(go.Scatter(x=df_alert["date"], y=df_alert[var_a], name=labels_a[var_a], line=dict(color="#1E2227")))
-            fig_alert.add_hline(y=limit_value, line_dash="dash", line_color="#D92D20",
-                                 annotation_text="Objectif minimum" if mode == "min" else "Limite maximale")
-            fig_alert.update_layout(height=300, plot_bgcolor="white", paper_bgcolor="white", margin=dict(t=30, l=10, r=10, b=10))
-            fig_alert = style_plotly(fig_alert)
-            st.plotly_chart(fig_alert, use_container_width=True)
-
-        if status in ("alerte", "critique") or (mode == "min" and status in ("alerte", "critique")):
-            st.markdown("##### Declenchement de l'alerte")
-            if st.button("Envoyer l'alerte aux managers", key="send_alert_btn"):
-                recipients = [r.strip() for r in recipients_raw.split(",") if r.strip()]
-                subject, body = alerts.build_alert_message(site_label_a, labels_a[var_a], latest_value, limit_value, "", status)
-                success, message = alerts.send_email_alert(recipients, subject, body)
-                if success:
-                    st.success(message)
-                else:
-                    st.warning(message)
-                with st.expander("Apercu du message envoye"):
-                    st.text(f"Objet : {subject}\n\n{body}")
-
-        st.markdown("##### Historique des jours de depassement")
-        df_alert_hist = df_alert.copy()
-        if mode == "max":
-            df_alert_hist["depassement"] = df_alert_hist[var_a] > limit_value
-        else:
-            df_alert_hist["depassement"] = df_alert_hist[var_a] < limit_value
-        n_depassements = df_alert_hist["depassement"].sum()
-        st.write(f"Sur la periode analysee, **{n_depassements} jours sur {len(df_alert_hist)}** "
-                 f"({n_depassements / len(df_alert_hist) * 100:.1f}%) ont depasse le seuil configure.")
-        if n_depassements > 0:
-            st.dataframe(
-                df_alert_hist[df_alert_hist["depassement"]][["date", var_a]].rename(
-                    columns={"date": "Date", var_a: labels_a[var_a]}
-                ).sort_values("Date", ascending=False),
-                use_container_width=True, height=220
-            )
+    alerts_tab.render(mines_df, {"UC": uc_df, "US": us_df, "UL": ul_df},
+                      MINE_LABELS, PHASE_LABELS, MINE_VAR_LABELS,
+                      PHASE_VAR_LABELS_UC_US, PHASE_VAR_LABELS_UL)
 
 with tab_market:
     market_tab.render(mines_df, {"UC": uc_df, "US": us_df, "UL": ul_df}, PHASE_LABELS)
