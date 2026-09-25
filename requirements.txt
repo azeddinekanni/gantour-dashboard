@@ -8,3 +8,6 @@ openpyxl
 scipy 
 python-dotenv
 pillow
+google-genai
+requests
+openpyxl

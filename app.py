@@ -20,6 +20,7 @@ from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 import style
 import auth
 import alerts
+import market_tab
 from data_loader import (
     build_mines_table, build_phase_table, get_data_issues,
     MINE_LABELS, PHASE_LABELS, MINE_VAR_LABELS, PHASE_VAR_LABELS_UC_US, PHASE_VAR_LABELS_UL
@@ -62,9 +63,9 @@ auth.logout_button()
 st.sidebar.divider()
 st.sidebar.caption("Analyse econometrique des determinants des couts et modelisation predictive des couts operationnels sur la chaine de valeur miniere - Site Gantour")
 
-tab_overview, tab_dist, tab_mines, tab_phases, tab_econometrics, tab_predict, tab_alerts = st.tabs(
+tab_overview, tab_dist, tab_mines, tab_phases, tab_econometrics, tab_predict, tab_alerts, tab_market = st.tabs(
     ["Vue d'ensemble", "Distribution des donnees", "Mines d'extraction", "Phases de traitement",
-     "Analyse econometrique", "Modelisation predictive", "Objectifs & Alertes"]
+     "Analyse econometrique", "Modelisation predictive", "Objectifs & Alertes", "Veille marche & Agent IA"]
 )
 
 with tab_overview:
@@ -679,3 +680,6 @@ with tab_alerts:
                 ).sort_values("Date", ascending=False),
                 use_container_width=True, height=220
             )
+
+with tab_market:
+    market_tab.render(mines_df, {"UC": uc_df, "US": us_df, "UL": ul_df}, PHASE_LABELS)
